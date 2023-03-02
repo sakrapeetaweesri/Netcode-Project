@@ -5,14 +5,39 @@ public class PlayerController : MonoBehaviour, IPlayerMovement
 {
     private float movementSpeed = 7f;
     [SerializeField] private Rigidbody2D _rigidbody2D;
-    public bool BlockMovement { get; set; }
+    private bool blockMovement;
+
+    private void Start()
+    {
+        if (MainLobbyManager.Instance == null) return;
+        MainLobbyManager.Instance.onCanvasEnabled += SetBlockMovement;
+    }
+
+    private void OnEnable()
+    {
+        if (MainLobbyManager.Instance == null) return;
+        MainLobbyManager.Instance.onCanvasEnabled += SetBlockMovement;
+    }
+    private void OnDisable()
+    {
+        if (MainLobbyManager.Instance == null) return;
+        MainLobbyManager.Instance.onCanvasEnabled -= SetBlockMovement;
+    }
+    private void SetBlockMovement(bool state)
+    {
+        blockMovement = state;
+    }
 
     /// <summary>
     /// Controls the player movement.
     /// </summary>
     private void FixedUpdate()
     {
-        if (BlockMovement) return;
+        if (blockMovement)
+        {
+            _rigidbody2D.velocity = Vector2.zero;
+            return;
+        }
 
         // Movement
         Movement();

@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.Netcode;
 using TMPro;
 
 public class MainLobbyManager : MonoBehaviour
@@ -11,7 +13,10 @@ public class MainLobbyManager : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI codeText;
     [SerializeField] private TMP_InputField codeInput;
+
     [SerializeField] private PlayerController offlinePlayer;
+
+    public Action<bool> onCanvasEnabled;
 
     public Vector2 LastPosition { get; private set; }
 
@@ -31,7 +36,7 @@ public class MainLobbyManager : MonoBehaviour
     /// <summary>
     /// Switches the telephone interactions.
     /// </summary>
-    public void SwitchTelephoneInteraction(bool networkConnected)
+    private void SwitchObjectInteraction(bool networkConnected)
     {
         relayRoomPanel.SetActive(networkConnected);
         joinOrCreatePanel.SetActive(!networkConnected);
@@ -43,14 +48,12 @@ public class MainLobbyManager : MonoBehaviour
     /// <param name="canvas">The canvas to be acivated.</param>
     public void ActivateCanvas(Canvas canvas)
     {
-        if (!Network_MainLobbyManager.NetworkConnected.Value)
-        {
-            LastPosition = offlinePlayer.transform.position;
-            offlinePlayer.BlockMovement = true;
-        }
+        RelayManager.lastPosition = offlinePlayer.transform.position;
 
         canvas.enabled = true;
         CurrentCanvas = canvas;
+
+        onCanvasEnabled?.Invoke(true);
     }
     /// <summary>
     /// Sets the given canvas to be deactive.
@@ -58,13 +61,10 @@ public class MainLobbyManager : MonoBehaviour
     /// <param name="canvas">The canvas to be deacivated.</param>
     public void DeactivateCanvas(Canvas canvas)
     {
-        if (!Network_MainLobbyManager.NetworkConnected.Value)
-        {
-            offlinePlayer.BlockMovement = false;
-        }
-
         canvas.enabled = false;
         CurrentCanvas = null;
+
+        onCanvasEnabled?.Invoke(false);
     }
 
     private void Update()
@@ -84,14 +84,7 @@ public class MainLobbyManager : MonoBehaviour
         // Creates a relay room.
         await RelayManager.Instance.CreateRelay();
 
-        // Manages the UI;
-        DeactivateCanvas(CurrentCanvas);
-        mainCanvas.enabled = true;
-        codeText.text += RelayManager.RelayCode;
-
-        // Disables the offline player.
-        offlinePlayer.enabled = false;
-        offlinePlayer.gameObject.SetActive(false);
+        ManageRelayContent();
     }
     /// <summary>
     /// Joins an existing relay room and manages the player.
@@ -101,10 +94,15 @@ public class MainLobbyManager : MonoBehaviour
         // Creates a relay room.
         if (!await RelayManager.Instance.JoinRelay(codeInput.text)) return;
 
+        ManageRelayContent();
+    }
+    private void ManageRelayContent()
+    {
+        SwitchObjectInteraction(true);
+
         // Manages the UI;
-        DeactivateCanvas(CurrentCanvas);
         mainCanvas.enabled = true;
-        codeText.text += codeInput.text;
+        codeText.text += RelayManager.RelayCode;
 
         // Disables the offline player.
         offlinePlayer.enabled = false;

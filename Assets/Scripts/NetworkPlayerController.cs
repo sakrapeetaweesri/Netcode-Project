@@ -6,6 +6,7 @@ using Unity.Netcode.Components;
 public class NetworkPlayerController : NetworkTransform, IPlayerMovement
 {
     private readonly float movementSpeed = 7f;
+    private bool blockMovement;
 
     private Rigidbody2D _rigidbody2D;
 
@@ -20,10 +21,14 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
             _rigidbody2D = GetComponent<Rigidbody2D>();
             CameraManager.Instance.AssignCameraTracker(transform);
 
+            transform.position = RelayManager.lastPosition;
+
             if (MainLobbyManager.Instance != null)
             {
-                transform.position = MainLobbyManager.Instance.LastPosition;
+                MainLobbyManager.Instance.onCanvasEnabled += SetBlockMovement;
             }
+
+            DontDestroyOnLoad(gameObject);
         }
 
         Players[OwnerClientId] = this;
@@ -39,7 +44,19 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
     {
         if (Players.ContainsKey(OwnerClientId)) Players.Remove(OwnerClientId);
 
+        if (IsOwner)
+        {
+            if (MainLobbyManager.Instance != null)
+            {
+                MainLobbyManager.Instance.onCanvasEnabled -= SetBlockMovement;
+            }
+        }
+
         base.OnNetworkDespawn();
+    }
+    private void SetBlockMovement(bool state)
+    {
+        blockMovement = state;
     }
 
     /// <summary>
@@ -49,6 +66,12 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
     {
         // Returns if not owner nor spawned.
         if (!IsSpawned || !IsOwner) return;
+
+        if (blockMovement)
+        {
+            _rigidbody2D.velocity = Vector2.zero;
+            return;
+        }
 
         if (MainLobbyManager.Instance != null)
         {

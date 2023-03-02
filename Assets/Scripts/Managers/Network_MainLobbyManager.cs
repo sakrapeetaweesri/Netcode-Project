@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Events;
 using Unity.Netcode;
 using TMPro;
 
@@ -13,8 +12,6 @@ public class Network_MainLobbyManager : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI maxPlayerText;
     [SerializeField] private TextMeshProUGUI playerReadyCountText;
 
-    public static NetworkVariable<bool> NetworkConnected = new NetworkVariable<bool>();
-
     public static Network_MainLobbyManager Instance { get; private set; }
 
     private void Awake()
@@ -22,17 +19,21 @@ public class Network_MainLobbyManager : NetworkBehaviour
         if (Instance == null)
         {
             Instance = this;
+            players = new NetworkList<PlayerState>();
         }
         else
         {
             Destroy(gameObject);
         }
-
-        players = new NetworkList<PlayerState>();
     }
 
     public override void OnNetworkSpawn()
     {
+        if (IsClient)
+        {
+            players.OnListChanged += HandlePlayerStateChanged;
+        }
+
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
@@ -43,9 +44,16 @@ public class Network_MainLobbyManager : NetworkBehaviour
                 HandleClientConnected(player.ClientId);
             }
         }
+
+        UpdatePlayerCard();
     }
     public override void OnNetworkDespawn()
     {
+        if (IsClient)
+        {
+            players.OnListChanged -= HandlePlayerStateChanged;
+        }
+
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
@@ -55,14 +63,7 @@ public class Network_MainLobbyManager : NetworkBehaviour
     private void HandleClientConnected(ulong playerID)
     {
         players.Add(new PlayerState(playerID));
-
-        for (int i = 0; i < players.Count; i++)
-        {
-            playerCards[i].UpdateDisplay(players[i]);
-        }
-
-        NetworkConnected.Value = true;
-        MainLobbyManager.Instance.SwitchTelephoneInteraction(true);
+        Debug.Log("New player added, current player count: " + players.Count);
     }
     private void HandleClientDisconnected(ulong playerID)
     {
@@ -75,11 +76,12 @@ public class Network_MainLobbyManager : NetworkBehaviour
             }
         }
 
-        if (players.Count == 0)
-        {
-            NetworkConnected.Value = false;
-            MainLobbyManager.Instance.SwitchTelephoneInteraction(false);
-        }
+        UpdateMaxPlayer();
+        UpdatePlayerCard();
+    }
+    private void HandlePlayerStateChanged(NetworkListEvent<PlayerState> changeEvent)
+    {
+        UpdatePlayerCard();
     }
 
     /// <summary>
@@ -88,6 +90,20 @@ public class Network_MainLobbyManager : NetworkBehaviour
     public void UpdateMaxPlayer()
     {
         maxPlayerText.SetText(NetworkPlayerController.Players.Count.ToString());
+    }
+    private void UpdatePlayerCard()
+    {
+        for (int i = 0; i < playerCards.Length; i++)
+        {
+            if (players.Count > i)
+            {
+                playerCards[i].UpdateDisplay(players[i]);
+            }
+            else
+            {
+                playerCards[i].DisableVisuals();
+            }
+        }
     }
 }
 

@@ -12,7 +12,10 @@ using Unity.Services.Relay.Models;
 
 public class RelayManager : MonoBehaviour
 {
+    public static Vector2 lastPosition;
     public static string RelayCode { get; private set; }
+    public static bool RelayConnected { get; private set; }
+
     public static RelayManager Instance { get; private set; }
 
     private void Awake()
@@ -74,6 +77,8 @@ public class RelayManager : MonoBehaviour
             RelayServerData relayServerData = new RelayServerData(alloc, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
+            RelayConnected = true;
+
             NetworkManager.Singleton.StartHost();
         }
         // Logs incase there's an error.
@@ -96,6 +101,9 @@ public class RelayManager : MonoBehaviour
             // Starts NetworkManager server.
             RelayServerData relayServerData = new RelayServerData(joinAlloc, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
+            RelayCode = code;
+            RelayConnected = true;
 
             NetworkManager.Singleton.StartClient();
 
