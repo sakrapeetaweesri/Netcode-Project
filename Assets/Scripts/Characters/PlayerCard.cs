@@ -10,6 +10,7 @@ public class PlayerCard : MonoBehaviour
     [SerializeField] private Image characterIconImage;
     [SerializeField] private TextMeshProUGUI playerNameText;
     [SerializeField] private TextMeshProUGUI characterNameText;
+    [SerializeField] private GameObject kickButton;
 
     public void UpdateDisplay(PlayerState playerState)
     {
@@ -20,9 +21,12 @@ public class PlayerCard : MonoBehaviour
 
         characterVisuals.SetActive(true);
     }
-
     public void DisableVisuals()
     {
         characterVisuals.SetActive(false);
+    }
+    public void DisplayKickButton()
+    {
+        kickButton.SetActive(true);
     }
 }

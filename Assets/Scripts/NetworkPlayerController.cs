@@ -27,8 +27,6 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
             {
                 MainLobbyManager.Instance.onCanvasEnabled += SetBlockMovement;
             }
-
-            DontDestroyOnLoad(gameObject);
         }
 
         Players[OwnerClientId] = this;
