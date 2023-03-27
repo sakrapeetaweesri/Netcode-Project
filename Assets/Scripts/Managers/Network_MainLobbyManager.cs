@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
@@ -14,6 +15,9 @@ public class Network_MainLobbyManager : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI playerReadyCountText;
 
     [SerializeField] private GameObject startGameButton;
+    [SerializeField] private GameObject gameHud;
+
+    [SerializeField] private Transform testSpawnPoint;
 
     public static Network_MainLobbyManager Instance { get; private set; }
 
@@ -69,7 +73,7 @@ public class Network_MainLobbyManager : NetworkBehaviour
     }
     private void HandleClientConnected(ulong playerID)
     {
-        players.Add(new PlayerState(playerID));
+        players.Add(new PlayerState(playerID, MainLobbyManager.LocalCharacterId));
     }
     private void HandleClientDisconnected(ulong playerID)
     {
@@ -168,17 +172,22 @@ public class Network_MainLobbyManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        Debug.Log("Game started!");
+        startGameButton.SetActive(false);
 
-        var status = NetworkManager.SceneManager.LoadScene("Office", LoadSceneMode.Single);
-        if (status != SceneEventProgressStatus.Started)
+        foreach (var p in NetworkPlayerController.Players)
         {
-            Debug.LogWarning($"Failed to load the next scene " +
-                    $"with a {nameof(SceneEventProgressStatus)}: {status}");
+            p.Value.TeleportClientRpc(testSpawnPoint.position);
         }
+
+        SetGameHUDClientRpc(true);
     }
     
-
+    [ClientRpc]
+    private void SetGameHUDClientRpc(bool active)
+    {
+        gameHud.SetActive(active);
+        MainLobbyManager.Instance.mainCanvas.enabled = !active;
+    }
     [ServerRpc(RequireOwnership = false)]
     private void SetReadyStateServerRpc(ServerRpcParams serverRpcParams = default)
     {
@@ -187,7 +196,7 @@ public class Network_MainLobbyManager : NetworkBehaviour
             if (players[i].ClientID == serverRpcParams.Receive.SenderClientId)
             {
                 var temp = players[i];
-                players[i] = new PlayerState(temp.ClientID, !temp.IsReady);
+                players[i] = new PlayerState(temp.ClientID, temp.CharacterID, !temp.IsReady);
             }
         }
     }
@@ -201,10 +210,12 @@ public struct PlayerState : INetworkSerializable, IEquatable<PlayerState>
 {
     public ulong ClientID;
     public bool IsReady;
+    public int CharacterID;
 
-    public PlayerState(ulong clientID, bool isReady = false)
+    public PlayerState(ulong clientID, int characterId, bool isReady = false)
     {
         ClientID = clientID;
+        CharacterID = characterId;
         IsReady = isReady;
     }
 
@@ -212,10 +223,11 @@ public struct PlayerState : INetworkSerializable, IEquatable<PlayerState>
     {
         serializer.SerializeValue(ref ClientID);
         serializer.SerializeValue(ref IsReady);
+        serializer.SerializeValue(ref CharacterID);
     }
 
     public bool Equals(PlayerState other)
     {
-        return ClientID == other.ClientID && IsReady == other.IsReady;
+        return ClientID == other.ClientID && IsReady == other.IsReady && CharacterID == other.CharacterID;
     }
 }

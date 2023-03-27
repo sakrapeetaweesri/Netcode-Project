@@ -1,15 +1,14 @@
 using System;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using Unity.Netcode;
 using TMPro;
 
 public class MainLobbyManager : MonoBehaviour
 {
     public Canvas CurrentCanvas { get; private set; }
-    [SerializeField] private Canvas mainCanvas;
+    [SerializeField] public Canvas mainCanvas;
     [SerializeField] private GameObject joinOrCreatePanel;
     [SerializeField] private GameObject relayRoomPanel;
+    [SerializeField] private CanvasGroup joinOrCreateCanvasGroup;
 
     [SerializeField] private TextMeshProUGUI codeText;
     [SerializeField] private TMP_InputField codeInput;
@@ -17,6 +16,8 @@ public class MainLobbyManager : MonoBehaviour
     [SerializeField] private PlayerController offlinePlayer;
 
     public Action<bool> onCanvasEnabled;
+
+    public static int LocalCharacterId = 0;
 
     public Vector2 LastPosition { get; private set; }
 
@@ -81,8 +82,12 @@ public class MainLobbyManager : MonoBehaviour
     /// </summary>
     public async void CreateRoom()
     {
+        joinOrCreateCanvasGroup.blocksRaycasts = false;
+
         // Creates a relay room.
         await RelayManager.Instance.CreateRelay();
+
+        joinOrCreateCanvasGroup.blocksRaycasts = true;
 
         ManageRelayContent();
     }
@@ -91,8 +96,14 @@ public class MainLobbyManager : MonoBehaviour
     /// </summary>
     public async void JoinRoom()
     {
+        joinOrCreateCanvasGroup.blocksRaycasts = false;
+
         // Creates a relay room.
-        if (!await RelayManager.Instance.JoinRelay(codeInput.text)) return;
+        if (!await RelayManager.Instance.JoinRelay(codeInput.text))
+        {
+            joinOrCreateCanvasGroup.blocksRaycasts = true;
+            return;
+        }
 
         ManageRelayContent();
     }

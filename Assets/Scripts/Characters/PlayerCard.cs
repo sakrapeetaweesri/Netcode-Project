@@ -15,6 +15,8 @@ public class PlayerCard : MonoBehaviour
     public void UpdateDisplay(PlayerState playerState)
     {
         characterIconImage.enabled = true;
+        characterIconImage.sprite = GameAssets.i.CharacterProfiles[playerState.CharacterID];
+        characterIconImage.SetNativeSize();
 
         playerNameText.SetText($"Player {playerState.ClientID}");
         characterNameText.SetText("Office Worker");

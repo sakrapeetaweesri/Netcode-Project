@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -12,6 +13,8 @@ using Unity.Services.Relay.Models;
 
 public class RelayManager : MonoBehaviour
 {
+    [SerializeField] private Image playImage;
+
     public static Vector2 lastPosition;
     public static string RelayCode { get; private set; }
     public static bool RelayConnected { get; private set; }
@@ -41,6 +44,8 @@ public class RelayManager : MonoBehaviour
     /// </summary>
     public async void SignIn()
     {
+        playImage.raycastTarget = false;
+
         try
         {
             // Logs in anonymously.
@@ -50,6 +55,8 @@ public class RelayManager : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogWarning(e);
+
+            playImage.raycastTarget = true;
             return;
         }
 

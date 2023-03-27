@@ -809,6 +809,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b565fd11f7b62ce44936b350121b4bce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playImage: {fileID: 2144565952}
 --- !u!4 &1640107214
 Transform:
   m_ObjectHideFlags: 0
