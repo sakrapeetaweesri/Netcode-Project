@@ -7,6 +7,8 @@ public class PlayerController : MonoBehaviour, IPlayerMovement
     [SerializeField] private Rigidbody2D _rigidbody2D;
     private bool blockMovement;
 
+    public int characterId;
+
     private void Start()
     {
         if (MainLobbyManager.Instance == null) return;
@@ -23,7 +25,7 @@ public class PlayerController : MonoBehaviour, IPlayerMovement
         if (MainLobbyManager.Instance == null) return;
         MainLobbyManager.Instance.onCanvasEnabled -= SetBlockMovement;
     }
-    private void SetBlockMovement(bool state)
+    public void SetBlockMovement(bool state)
     {
         blockMovement = state;
     }
@@ -92,7 +94,7 @@ public class PlayerController : MonoBehaviour, IPlayerMovement
 
         void SetAnimation(PlayerDirection playerDirection, bool isMoving)
         {
-            _anim.Play(animationClips[((int)playerDirection * 2) + (isMoving ? 1 : 0)].name);
+            _anim.Play(animationClips[(((int)playerDirection * 2) + (isMoving ? 1 : 0)) + (characterId * 8)].name);
         }
     }
 

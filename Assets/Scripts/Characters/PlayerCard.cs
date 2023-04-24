@@ -19,7 +19,7 @@ public class PlayerCard : MonoBehaviour
         characterIconImage.SetNativeSize();
 
         playerNameText.SetText($"Player {playerState.ClientID}");
-        characterNameText.SetText("Office Worker");
+        characterNameText.SetText(playerState.CharacterID == 0 ? "Office Worker" : "IT Guy");
 
         characterVisuals.SetActive(true);
     }

@@ -197,7 +197,6 @@ public class GameCanvasManager : NetworkBehaviour
         if (!computerActive) return;
         if (computerFinishCoroutine != null) return;
 
-        Debug.Log(providedText.text);
         if (inputText.text == providedText.text)
         {
             computerFinishCoroutine = StartCoroutine(ComputerFinishDelay());

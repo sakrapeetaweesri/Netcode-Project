@@ -26,7 +26,7 @@ public class TaskObject : NetworkTransform
         if (newTaskState == TaskState.Sent) return;
 
         _spriteRenderer.sprite = GameAssets.i.TaskSprites[(int)newTaskState - 1];
-        NetworkPlayerController.Players[NetworkObject.OwnerClientId].SetHoldingTaskServerRpc(newTaskState);
+
     }
 
     public override void OnNetworkSpawn()
@@ -56,6 +56,7 @@ public class TaskObject : NetworkTransform
         {
             var localPlayer = NetworkManager.SpawnManager?.GetLocalPlayerObject();
             if (localPlayer == null) return;
+            if (localPlayer.GetComponentInChildren<TaskObject>() != null) return;
 
             if ((_transform.position - localPlayer.transform.position).sqrMagnitude <= pickUpDistance)
             {
@@ -91,7 +92,7 @@ public class TaskObject : NetworkTransform
 
             isPickedUp.Value = true;
 
-            p.SetHoldingTaskServerRpc(taskState.Value);
+            p.RequestSetHoldingTask(taskState.Value);
         }
 
         SetSpriteRendererClientRpc(false);
@@ -107,7 +108,7 @@ public class TaskObject : NetworkTransform
         var senderClientId = serverRpcParams.Receive.SenderClientId;
         if (NetworkPlayerController.Players.TryGetValue(senderClientId, out NetworkPlayerController p))
         {
-            p.DisableBubbleServerRpc();
+            p.RequestSetHoldingTask(TaskState.None);
         }
 
         _transform.parent = null;
@@ -130,7 +131,11 @@ public class TaskObject : NetworkTransform
         }
 
         SetSpriteRendererClientRpc(_spriteRenderer.enabled, (int)newTaskState - 1);
-        NetworkPlayerController.Players[NetworkObject.OwnerClientId].SetHoldingTaskServerRpc(newTaskState);
+
+        if (NetworkManager.SpawnManager.GetLocalPlayerObject().TryGetComponent(out NetworkPlayerController p))
+        {
+            p.RequestSetHoldingTask(newTaskState);
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]

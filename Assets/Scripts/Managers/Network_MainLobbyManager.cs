@@ -73,7 +73,7 @@ public class Network_MainLobbyManager : NetworkBehaviour
     }
     private void HandleClientConnected(ulong playerID)
     {
-        players.Add(new PlayerState(playerID, MainLobbyManager.LocalCharacterId));
+        players.Add(new PlayerState(playerID, RelayManager.characterId));
     }
     private void HandleClientDisconnected(ulong playerID)
     {
@@ -197,6 +197,18 @@ public class Network_MainLobbyManager : NetworkBehaviour
             {
                 var temp = players[i];
                 players[i] = new PlayerState(temp.ClientID, temp.CharacterID, !temp.IsReady);
+            }
+        }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    public void SetCharacterServerRpc(int id, ServerRpcParams serverRpcParams = default)
+    {
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i].ClientID == serverRpcParams.Receive.SenderClientId)
+            {
+                var temp = players[i];
+                players[i] = new PlayerState(temp.ClientID, id, temp.IsReady);
             }
         }
     }

@@ -16,6 +16,7 @@ public class RelayManager : MonoBehaviour
     [SerializeField] private Image playImage;
 
     public static Vector2 lastPosition;
+    public static int characterId;
     public static string RelayCode { get; private set; }
     public static bool RelayConnected { get; private set; }
 

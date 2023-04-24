@@ -14,6 +14,7 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
     private SpriteRenderer bubbleIcon;
 
     public NetworkVariable<TaskState> holdingTask = new NetworkVariable<TaskState>();
+    public NetworkVariable<int> characterId = new NetworkVariable<int>();
 
     public static Dictionary<ulong, NetworkPlayerController> Players = new Dictionary<ulong, NetworkPlayerController>();
 
@@ -30,7 +31,7 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
 
             transform.position = RelayManager.lastPosition;
 
-            holdingTask.OnValueChanged += HandleHoldingTask;
+            characterId.OnValueChanged += HandleCharacterIdChanged;
 
             if (MainLobbyManager.Instance != null)
             {
@@ -40,6 +41,8 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
             {
                 GameCanvasManager.Instance.onCanvasEnabled += SetBlockMovement;
             }
+
+            SetCharacter(RelayManager.characterId);
 
             tickFrequency = 1.0f / NetworkManager.NetworkTickSystem.TickRate;
         }
@@ -71,7 +74,7 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
 
         base.OnNetworkDespawn();
     }
-    private void SetBlockMovement(bool state)
+    public void SetBlockMovement(bool state)
     {
         blockMovement = state;
     }
@@ -207,44 +210,87 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
 
         void SetAnimation(PlayerDirection playerDirection, bool isMoving)
         {
-            int animIndex = ((int)playerDirection * 2) + (isMoving ? 1 : 0);
+            int animIndex = ((int)playerDirection * 2) + (isMoving ? 1 : 0) + (characterId.Value * 8);
             if (IsOwner) _anim.Play(animationClips[animIndex].name);
         }
     }
     #endregion
 
-    [ServerRpc(RequireOwnership = false)]
-    public void SetHoldingTaskServerRpc(TaskState taskState)
+    public void SetCharacter(int id)
     {
-        holdingTask.Value = taskState;
+        if (IsServer)
+        {
+            characterId.Value = id;
+            Network_MainLobbyManager.Instance.SetCharacterServerRpc(id);
+            SetCharacterClientRpc(id);
+        }
+        else
+        {
+            SetCharacterServerRpc(id);
+        }
+    }
+    private void HandleCharacterIdChanged(int oldValue, int newValue)
+    {
+        Wardrobe.Instance.UpdateUI();
     }
     [ServerRpc(RequireOwnership = false)]
-    public void DisableBubbleServerRpc()
+    private void SetCharacterServerRpc(int id, ServerRpcParams serverRpcParams = default)
     {
-        holdingTask.Value = TaskState.None;
+        var senderClientId = serverRpcParams.Receive.SenderClientId;
+        if (Players.TryGetValue(senderClientId, out NetworkPlayerController p))
+        {
+            p.characterId.Value = id;
+            Network_MainLobbyManager.Instance.SetCharacterServerRpc(id);
+        }
     }
-
-    private void HandleHoldingTask(TaskState oldTaskState, TaskState newTaskState)
-    {
-        CallSetBubbleIconServerRpc(newTaskState != TaskState.None);
-    }
-    [ServerRpc(RequireOwnership = false)]
-    private void CallSetBubbleIconServerRpc(bool active)
-    {
-        SetBubbleIconClientRpc(active);
-    }
-
     [ClientRpc]
-    private void SetBubbleIconClientRpc(bool active)
+    private void SetCharacterClientRpc(int id)
+    {
+        characterId.Value = id;
+        Network_MainLobbyManager.Instance.SetCharacterServerRpc(id);
+    }
+
+    private void SetHoldingTask(TaskState state)
     {
         if (bubble == null)
         {
             bubble = transform.Find("Bubble").gameObject;
             bubbleIcon = transform.Find("Bubble/BubbleIcon").GetComponent<SpriteRenderer>();
         }
-        bubble.SetActive(active);
 
-        if ((int)holdingTask.Value - 1 <= 0) return;
-        bubbleIcon.sprite = GameAssets.i.TaskSprites[(int)holdingTask.Value - 1];
+        if ((int)state - 1 >= 0)
+        bubbleIcon.sprite = GameAssets.i.TaskSprites[(int)state - 1];
+
+        bubble.SetActive((int)state - 1 >= 0);
+    }
+
+    public void RequestSetHoldingTask(TaskState state)
+    {
+        if (IsServer)
+        {
+            holdingTask.Value = state;
+            SetHoldingTask(state);
+
+            SetHoldingTaskClientRpc(state);
+        }
+        else
+        {
+            if ((int)state - 1 >= 0)
+            bubbleIcon.sprite = GameAssets.i.TaskSprites[(int)state - 1];
+
+            SetHoldingTaskServerRpc(state);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetHoldingTaskServerRpc(TaskState state)
+    {
+        holdingTask.Value = state;
+        SetHoldingTask(state);
+    }
+    [ClientRpc]
+    public void SetHoldingTaskClientRpc(TaskState state)
+    {
+        SetHoldingTask(state);
     }
 }

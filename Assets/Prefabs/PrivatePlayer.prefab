@@ -157,6 +157,14 @@ MonoBehaviour:
   - {fileID: 7400000, guid: d1bf7f7b3eee5d64c94c781f5797723e, type: 2}
   - {fileID: 7400000, guid: ea645be95b1fe434f9f4873553e113d8, type: 2}
   - {fileID: 7400000, guid: 3a7d7878a28128940b86f9483cd647db, type: 2}
+  - {fileID: 7400000, guid: 4c977eabdab9aea47a79ae337d66afef, type: 2}
+  - {fileID: 7400000, guid: 247249ce5c963644ba480a6fe032b84b, type: 2}
+  - {fileID: 7400000, guid: b62d974d78cd7fd44a2a018c09579b54, type: 2}
+  - {fileID: 7400000, guid: 8659fbab84762554d8e3ada424d738bd, type: 2}
+  - {fileID: 7400000, guid: c407daac1671fc947844fcac5ffab0c0, type: 2}
+  - {fileID: 7400000, guid: f01f33aa05f0f094c8b7e8c3462f11ed, type: 2}
+  - {fileID: 7400000, guid: 761d2f610ee6b3847b9d88f31d24e5d6, type: 2}
+  - {fileID: 7400000, guid: 52fed15ddec37ab4dbf3ae0f038efcb3, type: 2}
   _anim: {fileID: 1189594812}
   lastDirection: 1
   currentDirection: 1

@@ -27,6 +27,6 @@ public class UI_Pen : UI_Draggable
     private IEnumerator FinishSignName()
     {
         yield return new WaitForSeconds(1f);
-        GameCanvasManager.Instance.FinishDeskTask();
+        Task_Sign.Instance.FinishDeskTask();
     }
 }
