@@ -10,6 +10,8 @@ public class Task_Type : NetworkBehaviour
     [SerializeField] private TMP_InputField inputText;
     [SerializeField] private float interactDistance;
     [SerializeField] private SpriteRenderer errorBubble;
+    [SerializeField] private SpriteRenderer computerRenderer;
+    [SerializeField] private Sprite[] computerSprites;
     private readonly string TextProvider = "WERTYUOPASDFGHJKLZXCVBNM wertyuiopasdfghjkzxcvbnm";
     private bool computerActive;
     private Coroutine computerCoroutine;
@@ -168,6 +170,23 @@ public class Task_Type : NetworkBehaviour
     private void HandleErrorStateChanged(bool oldState, bool newState)
     {
         errorBubble.enabled = newState;
+        RequestSetRenderer(newState);
         if (newState) Task_TypeError.Instance.ShowErrorTask();
+    }
+    public void RequestSetRenderer(bool state)
+    {
+        if (IsServer)
+        {
+            computerRenderer.sprite = computerSprites[state ? 1 : 0];
+        }
+        else
+        {
+            SetRendererServerRpc(state);
+        }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void SetRendererServerRpc(bool state)
+    {
+        computerRenderer.sprite = computerSprites[state ? 1 : 0];
     }
 }

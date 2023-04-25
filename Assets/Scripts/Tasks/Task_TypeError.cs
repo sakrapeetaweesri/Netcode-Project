@@ -118,17 +118,20 @@ public class Task_TypeError : NetworkBehaviour
 
     public void RestartMouseOver()
     {
+        if (errorCoroutine != null) return;
         if (holdValue >= 1f) return;
         restartButton.color = new Color(0.7830189f, 0.7830189f, 0.7830189f);
     }
     public void RestartMouseDown()
     {
+        if (errorCoroutine != null) return;
         if (holdValue >= 1f) return;
         isHolding = true;
         restartButton.color = new Color(0.4622642f, 0.4622642f, 0.4622642f);
     }
     public void RestartMouseUp()
     {
+        if (errorCoroutine != null) return;
         if (holdValue >= 1f) return;
         isHolding = false;
         restartButton.color = new Color(1f, 1f, 1f);
