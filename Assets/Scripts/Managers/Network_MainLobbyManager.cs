@@ -19,6 +19,8 @@ public class Network_MainLobbyManager : NetworkBehaviour
 
     [SerializeField] private Transform testSpawnPoint;
 
+    public NetworkVariable<bool> gameStarted = new NetworkVariable<bool>();
+
     public static Network_MainLobbyManager Instance { get; private set; }
 
     private void Awake()
@@ -180,6 +182,8 @@ public class Network_MainLobbyManager : NetworkBehaviour
         }
 
         SetGameHUDClientRpc(true);
+
+        gameStarted.Value = true;
     }
     
     [ClientRpc]

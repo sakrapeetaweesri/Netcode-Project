@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using TMPro;
@@ -10,13 +9,16 @@ public class Task_Type : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI providedText;
     [SerializeField] private TMP_InputField inputText;
     [SerializeField] private float interactDistance;
+    [SerializeField] private SpriteRenderer errorBubble;
     private readonly string TextProvider = "WERTYUOPASDFGHJKLZXCVBNM wertyuiopasdfghjkzxcvbnm";
     private bool computerActive;
     private Coroutine computerCoroutine;
     private Coroutine computerFinishCoroutine;
-    private NetworkObject playerInteracting;
+    public NetworkPlayerController playerInteracting;
 
     private int providerLength = 10;
+
+    public NetworkVariable<bool> isError = new NetworkVariable<bool>();
 
     public static Task_Type Instance { get; private set; }
     private void Awake()
@@ -35,7 +37,7 @@ public class Task_Type : NetworkBehaviour
     {
         if (!computerActive)
         {
-            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject();
+            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject().GetComponent<NetworkPlayerController>();
             if (playerInteracting == null) return;
 
             if ((transform.position - playerInteracting.transform.position).sqrMagnitude <= interactDistance)
@@ -55,9 +57,42 @@ public class Task_Type : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        isError.OnValueChanged += HandleErrorStateChanged;
+
+        base.OnNetworkSpawn();
+    }
+    public override void OnNetworkDespawn()
+    {
+        isError.OnValueChanged -= HandleErrorStateChanged;
+
+        base.OnNetworkDespawn();
+    }
+
     public void RequestComputerTask()
     {
         if (computerActive) return;
+
+        void SetComputer()
+        {
+            if (computerCoroutine != null) StopCoroutine(computerCoroutine);
+
+            computerActive = true;
+            playerInteracting.GetComponent<NetworkPlayerController>().SetBlockMovement(true);
+
+            computerCoroutine = StartCoroutine(Utils.SlideCoroutine(computerPanel, computerPanel.anchoredPosition, Vector2.zero, 20f));
+        }
+
+        if (isError.Value)
+        {
+            Task_TypeError.Instance.ShowErrorTask();
+
+            if (computerCoroutine != null) StopCoroutine(computerCoroutine);
+
+            SetComputer();
+            return;
+        }
 
         var taskObject = playerInteracting.GetComponentInChildren<TaskObject>();
         if (taskObject != null)
@@ -67,20 +102,15 @@ public class Task_Type : NetworkBehaviour
         }
         else return;
 
-        if (computerCoroutine != null) StopCoroutine(computerCoroutine);
-
-        computerActive = true;
-        playerInteracting.GetComponent<NetworkPlayerController>().SetBlockMovement(true);
+        SetComputer();
 
         providedText.SetText("");
         inputText.text = "";
         inputText.interactable = true;
         for (int i = 0; i < providerLength; i++)
         {
-            providedText.text += TextProvider[UnityEngine.Random.Range(0, TextProvider.Length)];
+            providedText.text += TextProvider[Random.Range(0, TextProvider.Length)];
         }
-
-        computerCoroutine = StartCoroutine(Utils.SlideCoroutine(computerPanel, computerPanel.anchoredPosition, Vector2.zero, 20f));
     }
     public void FinishComputerTask(bool isCanceled = false)
     {
@@ -98,7 +128,6 @@ public class Task_Type : NetworkBehaviour
         playerInteracting = null;
 
         if (computerCoroutine != null) StopCoroutine(computerCoroutine);
-
         computerCoroutine = StartCoroutine(Utils.SlideCoroutine(computerPanel, computerPanel.anchoredPosition, new Vector2(0f, -1100f), 30f));
     }
     public void InputValidate()
@@ -118,5 +147,27 @@ public class Task_Type : NetworkBehaviour
         yield return new WaitForSeconds(1f);
         FinishComputerTask();
         computerFinishCoroutine = null;
+    }
+
+    public void RequestSetErrorState(bool state)
+    {
+        if (IsServer)
+        {
+            isError.Value = state;
+        }
+        else
+        {
+            SetErrorStateServerRpc(state);
+        }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void SetErrorStateServerRpc(bool state)
+    {
+        isError.Value = state;
+    }
+    private void HandleErrorStateChanged(bool oldState, bool newState)
+    {
+        errorBubble.enabled = newState;
+        if (newState) Task_TypeError.Instance.ShowErrorTask();
     }
 }

@@ -21,6 +21,7 @@ public class UI_DropHandler : MonoBehaviour, IDropHandler
 
         // Handles anything else.
         PenHandler(eventData.pointerDrag);
+        PaperPackHandler(eventData.pointerDrag);
     }
 
     /// <summary>
@@ -45,6 +46,12 @@ public class UI_DropHandler : MonoBehaviour, IDropHandler
             p.SignName();
         }
     }
-
+    private void PaperPackHandler(GameObject pointer)
+    {
+        if (pointer.TryGetComponent(out Task_CopyError_Paper p))
+        {
+            p.InsertPaper();
+        }
+    }
     #endregion
 }

@@ -12,6 +12,7 @@ public class Task_Copy : NetworkBehaviour
     [SerializeField] private Image[] objectiveOrders;
     [SerializeField] private Color[] orderColors;
     [SerializeField] private float interactDistance;
+    [SerializeField] private SpriteRenderer errorBubble;
     private List<int> printerObjective = new List<int>();
     private List<int> printerPlayerInput = new List<int>();
     private bool printerActive;
@@ -19,7 +20,9 @@ public class Task_Copy : NetworkBehaviour
     private Coroutine printerFailedCoroutine;
     private Coroutine printerFinishCoroutine;
     private Coroutine printedDocCoroutine;
-    private NetworkObject playerInteracting;
+    public NetworkPlayerController playerInteracting;
+
+    public NetworkVariable<bool> isError = new NetworkVariable<bool>();
 
     public static Task_Copy Instance { get; private set; }
     private void Awake()
@@ -34,18 +37,28 @@ public class Task_Copy : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        isError.OnValueChanged += HandleErrorStateChanged;
+
+        base.OnNetworkSpawn();
+    }
+
     private void Update()
     {
         if (!printerActive)
         {
-            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject();
+            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject().GetComponent< NetworkPlayerController>();
             if (playerInteracting == null) return;
 
             if ((transform.position - playerInteracting.transform.position).sqrMagnitude <= interactDistance)
             {
                 if (Input.GetKeyDown(KeyCode.E))
                 {
-                    RequestPrinterTask();
+                    if (isError.Value)
+                        Task_CopyError.Instance.ShowErrorTask();
+                    else
+                        RequestPrinterTask();
                 }
             }
         }
@@ -84,7 +97,7 @@ public class Task_Copy : NetworkBehaviour
 
         printerCanvasGroup.blocksRaycasts = true;
         printerActive = true;
-        playerInteracting.GetComponent<NetworkPlayerController>().SetBlockMovement(true);
+        playerInteracting.SetBlockMovement(true);
 
         printerCoroutine = StartCoroutine(Utils.SlideCoroutine(printerPanel, printerPanel.anchoredPosition, Vector2.zero, 20f));
     }
@@ -95,7 +108,11 @@ public class Task_Copy : NetworkBehaviour
         var taskObject = playerInteracting.GetComponentInChildren<TaskObject>();
         if (taskObject != null)
         {
-            if (!isCanceled) taskObject.SetTaskStateServerRpc(TaskState.CopiedDocument);
+            if (!isCanceled)
+            {
+                taskObject.SetTaskStateServerRpc(TaskState.CopiedDocument);
+                Task_CopyError.Instance.ManageError();
+            }
             taskObject.RequestSetInteractionServerRpc(false);
         }
 
@@ -104,7 +121,7 @@ public class Task_Copy : NetworkBehaviour
 
         printerCanvasGroup.blocksRaycasts = false;
         printerActive = false;
-        playerInteracting.GetComponent<NetworkPlayerController>().SetBlockMovement(false);
+        playerInteracting.SetBlockMovement(false);
 
         if (printerCoroutine != null) StopCoroutine(printerCoroutine);
         if (printerFinishCoroutine != null) StopCoroutine(printerFinishCoroutine);
@@ -151,5 +168,26 @@ public class Task_Copy : NetworkBehaviour
         yield return new WaitForSeconds(1f);
         FinishPrinterTask();
         printerFinishCoroutine = null;
+    }
+    
+    public void RequestSetErrorState(bool state)
+    {
+        if (IsServer)
+        {
+            isError.Value = state;
+        }
+        else
+        {
+            SetErrorStateServerRpc(state);
+        }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void SetErrorStateServerRpc(bool state)
+    {
+        isError.Value = state;
+    }
+    private void HandleErrorStateChanged(bool oldState, bool newState)
+    {
+        errorBubble.enabled = newState;
     }
 }
