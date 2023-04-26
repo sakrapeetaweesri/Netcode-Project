@@ -21,7 +21,7 @@ public class Task_CopyError : NetworkBehaviour
     private Coroutine paperPackCoroutine;
     private Coroutine errorScreenCoroutine;
     private Coroutine printerPaperCoroutine;
-    private Coroutine errorCoroutine;
+    public Coroutine errorCoroutine;
 
     private bool errorHit;
     private readonly int initialErrorChance = 4;

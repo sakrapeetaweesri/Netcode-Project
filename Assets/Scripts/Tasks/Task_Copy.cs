@@ -64,7 +64,8 @@ public class Task_Copy : NetworkBehaviour
         }
         else
         {
-            if (Input.GetKeyDown(KeyCode.Q))
+            if (Input.GetKeyDown(KeyCode.Q) && printerFinishCoroutine == null && printerFailedCoroutine == null
+                && Task_CopyError.Instance.errorCoroutine == null)
             {
                 FinishPrinterTask(true);
             }

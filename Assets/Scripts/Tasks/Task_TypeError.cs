@@ -10,7 +10,7 @@ public class Task_TypeError : NetworkBehaviour
     [SerializeField] private Image restartButton;
     [SerializeField] private Image restartGauge;
     private bool isHolding;
-    private Coroutine errorCoroutine;
+    public Coroutine errorCoroutine;
 
     private readonly float holdSpeed = 0.25f;
     private float holdValue;
@@ -109,7 +109,7 @@ public class Task_TypeError : NetworkBehaviour
 
         yield return new WaitForSeconds(0.5f);
         Task_Type.Instance.FinishComputerTask(true);
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.3f);
         errorScreen.SetActive(false);
 
         errorHit = false;

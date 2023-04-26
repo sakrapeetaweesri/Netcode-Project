@@ -178,12 +178,23 @@ public class Network_MainLobbyManager : NetworkBehaviour
 
         foreach (var p in NetworkPlayerController.Players)
         {
-            p.Value.TeleportClientRpc(testSpawnPoint.position);
+            var spawnPos = testSpawnPoint.position;
+            spawnPos.x += UnityEngine.Random.Range(-1f, 1f);
+            spawnPos.y += UnityEngine.Random.Range(-1f, 1f);
+            p.Value.TeleportClientRpc(spawnPos);
         }
 
+        GameCanvasManager.Instance.ResetDocuments();
         SetGameHUDClientRpc(true);
 
         gameStarted.Value = true;
+    }
+    public void GameRestart()
+    {
+        if (!IsServer) return;
+
+        SetGameHUDClientRpc(false);
+        gameStarted.Value = false;
     }
     
     [ClientRpc]

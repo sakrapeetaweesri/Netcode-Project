@@ -52,7 +52,8 @@ public class Task_Type : NetworkBehaviour
         }
         else
         {
-            if (Input.GetKeyDown(KeyCode.Q))
+            if (Input.GetKeyDown(KeyCode.Q) && Task_TypeError.Instance.errorCoroutine == null &&
+                computerFinishCoroutine == null)
             {
                 FinishComputerTask(true);
             }
@@ -109,6 +110,7 @@ public class Task_Type : NetworkBehaviour
         providedText.SetText("");
         inputText.text = "";
         inputText.interactable = true;
+        providerLength = playerInteracting.characterId.Value == 0 ? 8 : 15;
         for (int i = 0; i < providerLength; i++)
         {
             providedText.text += TextProvider[Random.Range(0, TextProvider.Length)];

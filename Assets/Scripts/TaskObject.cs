@@ -167,6 +167,15 @@ public class TaskObject : NetworkTransform
         if (spriteIndex >= 0)
             _spriteRenderer.sprite = GameAssets.i.TaskSprites[spriteIndex];
     }
+
+    public void RequestReset(Vector3 newPos)
+    {
+        if (!IsServer) return;
+
+        SetTaskState(TaskState.PlainDocument);
+        SetSpriteRendererClientRpc(true, 0);
+        SetPositionClientRpc(newPos);
+    }
 }
 
 public enum TaskState
