@@ -246,7 +246,6 @@ public class NetworkPlayerController : NetworkTransform, IPlayerMovement
     [ClientRpc]
     private void SetCharacterClientRpc(int id)
     {
-        characterId.Value = id;
         Network_MainLobbyManager.Instance.SetCharacterServerRpc(id);
     }
 

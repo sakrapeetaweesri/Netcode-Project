@@ -39,7 +39,7 @@ public class Task_TypeError : NetworkBehaviour
     {
         if (!Network_MainLobbyManager.Instance.gameStarted.Value) return;
 
-        if (!errorHit)
+        if (!Task_Type.Instance.isError.Value)
         {
             ManageError();
             return;
@@ -59,6 +59,8 @@ public class Task_TypeError : NetworkBehaviour
 
     private void ManageError()
     {
+        if (!IsServer) return;
+
         timer += Time.deltaTime;
 
         if (timer >= 1f)
@@ -75,6 +77,24 @@ public class Task_TypeError : NetworkBehaviour
             Task_Type.Instance.RequestSetErrorState(true);
             errorChance = initialErrorChance;
         }
+    }
+
+    public void RequestHideErrorTask()
+    {
+        if (IsServer)
+        {
+            errorScreen.SetActive(false);
+        }
+        else
+        {
+            HideErrorTaskServerRpc();
+        }
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void HideErrorTaskServerRpc()
+    {
+        errorScreen.SetActive(false);
+        RequestHideErrorTask();
     }
 
     public void ShowErrorTask()

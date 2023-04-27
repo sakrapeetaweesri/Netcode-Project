@@ -123,7 +123,7 @@ public class TaskObject : NetworkTransform
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SetTaskStateServerRpc(TaskState newTaskState)
+    public void SetTaskStateServerRpc(TaskState newTaskState, ServerRpcParams serverRpcParams = default)
     {
         if (IsServer)
         {
@@ -132,7 +132,7 @@ public class TaskObject : NetworkTransform
 
         SetSpriteRendererClientRpc(_spriteRenderer.enabled, (int)newTaskState - 1);
 
-        if (NetworkManager.SpawnManager.GetLocalPlayerObject().TryGetComponent(out NetworkPlayerController p))
+        if (NetworkPlayerController.Players.TryGetValue(serverRpcParams.Receive.SenderClientId, out NetworkPlayerController p))
         {
             p.RequestSetHoldingTask(newTaskState);
         }

@@ -39,7 +39,7 @@ public class Task_Type : NetworkBehaviour
     {
         if (!computerActive)
         {
-            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject().GetComponent<NetworkPlayerController>();
+            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject()?.GetComponent<NetworkPlayerController>();
             if (playerInteracting == null) return;
 
             if ((transform.position - playerInteracting.transform.position).sqrMagnitude <= interactDistance)
@@ -58,6 +58,8 @@ public class Task_Type : NetworkBehaviour
                 FinishComputerTask(true);
             }
         }
+
+        HandleErrorState(isError.Value);
     }
 
     public override void OnNetworkSpawn()
@@ -76,6 +78,15 @@ public class Task_Type : NetworkBehaviour
     public void RequestComputerTask()
     {
         if (computerActive) return;
+
+        providedText.SetText("");
+        inputText.text = "";
+        inputText.interactable = true;
+        providerLength = playerInteracting.characterId.Value == 0 ? 8 : 15;
+        for (int i = 0; i < providerLength; i++)
+        {
+            providedText.text += TextProvider[Random.Range(0, TextProvider.Length)];
+        }
 
         void SetComputer()
         {
@@ -106,15 +117,6 @@ public class Task_Type : NetworkBehaviour
         else return;
 
         SetComputer();
-
-        providedText.SetText("");
-        inputText.text = "";
-        inputText.interactable = true;
-        providerLength = playerInteracting.characterId.Value == 0 ? 8 : 15;
-        for (int i = 0; i < providerLength; i++)
-        {
-            providedText.text += TextProvider[Random.Range(0, TextProvider.Length)];
-        }
     }
     public void FinishComputerTask(bool isCanceled = false)
     {
@@ -168,12 +170,19 @@ public class Task_Type : NetworkBehaviour
     private void SetErrorStateServerRpc(bool state)
     {
         isError.Value = state;
+        RequestSetErrorState(state);
     }
     private void HandleErrorStateChanged(bool oldState, bool newState)
     {
-        errorBubble.enabled = newState;
-        RequestSetRenderer(newState);
         if (newState) Task_TypeError.Instance.ShowErrorTask();
+        HandleErrorState(newState);
+    }
+    private void HandleErrorState(bool state)
+    {
+        errorBubble.enabled = state;
+        RequestSetRenderer(state);
+
+        if (!state) Task_TypeError.Instance.RequestHideErrorTask();
     }
     public void RequestSetRenderer(bool state)
     {
@@ -190,5 +199,6 @@ public class Task_Type : NetworkBehaviour
     private void SetRendererServerRpc(bool state)
     {
         computerRenderer.sprite = computerSprites[state ? 1 : 0];
+        RequestSetRenderer(state);
     }
 }

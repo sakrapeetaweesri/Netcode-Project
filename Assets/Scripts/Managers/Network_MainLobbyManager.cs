@@ -75,7 +75,7 @@ public class Network_MainLobbyManager : NetworkBehaviour
     }
     private void HandleClientConnected(ulong playerID)
     {
-        players.Add(new PlayerState(playerID, RelayManager.characterId));
+        players.Add(new PlayerState(playerID, 0));
     }
     private void HandleClientDisconnected(ulong playerID)
     {
@@ -192,6 +192,8 @@ public class Network_MainLobbyManager : NetworkBehaviour
     public void GameRestart()
     {
         if (!IsServer) return;
+
+        startGameButton.SetActive(true);
 
         SetGameHUDClientRpc(false);
         gameStarted.Value = false;

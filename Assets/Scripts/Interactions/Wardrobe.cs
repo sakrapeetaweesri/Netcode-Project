@@ -83,7 +83,6 @@ public class Wardrobe : NetworkBehaviour
         if (privatePlayerInteracting != null)
         {
             privatePlayerInteracting.characterId = characterSelected;
-            RelayManager.characterId = characterSelected;
         }
         else
         {

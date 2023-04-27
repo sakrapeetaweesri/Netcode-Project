@@ -48,7 +48,7 @@ public class Task_Copy : NetworkBehaviour
     {
         if (!printerActive)
         {
-            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject().GetComponent< NetworkPlayerController>();
+            playerInteracting = NetworkManager.SpawnManager?.GetLocalPlayerObject()?.GetComponent<NetworkPlayerController>();
             if (playerInteracting == null) return;
 
             if ((transform.position - playerInteracting.transform.position).sqrMagnitude <= interactDistance)
@@ -186,6 +186,7 @@ public class Task_Copy : NetworkBehaviour
     private void SetErrorStateServerRpc(bool state)
     {
         isError.Value = state;
+        RequestSetErrorState(state);
     }
     private void HandleErrorStateChanged(bool oldState, bool newState)
     {

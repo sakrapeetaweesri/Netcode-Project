@@ -46,7 +46,7 @@ public class Task_CopyError : NetworkBehaviour
     {
         if (!Network_MainLobbyManager.Instance.gameStarted.Value) return;
 
-        if (!errorHit && !Task_Copy.Instance.isError.Value)
+        if (!Task_Copy.Instance.isError.Value)
             return;
 
         HandleDragging();
@@ -54,6 +54,8 @@ public class Task_CopyError : NetworkBehaviour
 
     public void ManageError()
     {
+        if (!IsServer) return;
+
         if (Random.Range(0, errorChance) != 0)
         {
             errorChance--;
